@@ -14,6 +14,8 @@
     </div>
     <div v-if="disableJoin" class="q-gutter-md">
       <action-fab
+        :videoMuteState="videoMuteState"
+        :audioMuteState="audioMuteState"
         @unmuteVideo="unmuteVideo"
         @muteVideo="muteVideo"
         @unmuteAudio="unmuteAudio"
@@ -59,6 +61,8 @@ export default {
   data () {
     return {
       isShowActionFab: true,
+      videoMuteState: '0',
+      audioMuteState: '0',
       disableJoin: false,
       rtc: null,
       localStream: null,
@@ -101,6 +105,9 @@ export default {
         const localStream = await this.rtc.publishStream()
         this.localStream = localStream
         this.disableJoin = true
+
+        this.updateVideoMuteState()
+        this.updateAudioMuteState()
       } catch (error) {
         console.log(error)
       }
@@ -109,6 +116,8 @@ export default {
       this.disableJoin = false
       try {
         await this.rtc.leaveChannel()
+        this.videoMuteState = '0'
+        this.audioMuteState = '0'
         console.log('Leave Success')
       } catch (error) {
         console.log('Leave Failure')
@@ -117,7 +126,30 @@ export default {
       this.localStream = null
       this.remoteStreams = []
     },
+    updateVideoMuteState () {
+      setTimeout(() => {
+        this.rtc.client.getLocalVideoStats((localVideoStats) => {
+          for (var uid in localVideoStats) {
+            if (uid.toString() === this.rtc.option.uid.toString()) {
+              this.videoMuteState = localVideoStats[uid].MuteState
+            }
+          }
+        })
+      }, 1000)
+    },
+    updateAudioMuteState () {
+      setTimeout(() => {
+        this.rtc.client.getLocalAudioStats((localAudioStats) => {
+          for (var uid in localAudioStats) {
+            if (uid.toString() === this.rtc.option.uid.toString()) {
+              this.audioMuteState = localAudioStats[uid].MuteState
+            }
+          }
+        })
+      }, 1000)
+    },
     async unmuteVideo () {
+      this.videoMuteState = '0'
       try {
         await this.localStream.unmuteVideo()
         console.log('unmute success')
@@ -126,6 +158,7 @@ export default {
       }
     },
     async muteVideo () {
+      this.videoMuteState = '1'
       try {
         await this.localStream.muteVideo()
         console.log('mute Video success')
@@ -134,6 +167,7 @@ export default {
       }
     },
     async unmuteAudio () {
+      this.audioMuteState = '0'
       try {
         await this.localStream.unmuteAudio()
         console.log('unmute Audio success')
@@ -142,6 +176,7 @@ export default {
       }
     },
     async muteAudio () {
+      this.audioMuteState = '1'
       try {
         await this.localStream.muteAudio()
         console.log('mute Audio success')
