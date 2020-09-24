@@ -48,12 +48,6 @@ export default class RTCClient {
         console.log(err)
       })
       this.client.leave(() => {
-        // Stop playing the local stream
-        if (this.localStream.isPlaying()) {
-          this.localStream.stop()
-        }
-        // Close the local stream
-        this.localStream.close()
         this.client = null
         resolve()
         console.log('client leaves channel success')
